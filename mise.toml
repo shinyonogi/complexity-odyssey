@@ -1,0 +1,11 @@
+[tools]
+node = "20.19.0"
+pnpm = "10.16.0"
+
+[tasks.setup]
+description = "Install project dependencies with pnpm"
+run = "pnpm install"
+
+[tasks.dev]
+description = "Run the Next.js development server"
+run = "pnpm dev"
