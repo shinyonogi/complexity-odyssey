@@ -1,4 +1,4 @@
-# Complexity Journey
+# complexity-odyssey
 
 An interactive journey through computational complexity theory — an experiment in building with AI Agents.
 
@@ -11,16 +11,17 @@ An interactive journey through computational complexity theory — an experiment
 
 ## Getting Started
 
-Node.js 20 and [pnpm](https://pnpm.io/) are required.
+[mise](https://mise.jdx.dev/) is required.
 
 ```bash
-pnpm install
-pnpm dev
+mise trust
+mise install
+mise run setup
+mise run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Deploy
 
-Optimized for [Vercel](https://vercel.com). Push to GitHub and import the repo — zero config needed.
-# complexity-odyssey
+[complexity-odyssey](https://complexity-odyssey.vercel.app/)
