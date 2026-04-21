@@ -22,7 +22,6 @@ type OverlayState = {
 
 const STORAGE_KEY = "complexity-atlas:voyager-v2";
 const TRAVEL_MS = 1800;
-const CARD_HIDE_MS = 4200;
 const SpaceBackground = dynamic(() => import("@/components/space-background"), {
   ssr: false,
 });
@@ -103,6 +102,11 @@ export default function Home() {
   });
   const [hasHydrated, setHasHydrated] = useState(false);
 
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const panStartRef = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+
   const travelTimerRef = useRef<number | null>(null);
   const overlayTimerRef = useRef<number | null>(null);
 
@@ -145,20 +149,7 @@ export default function Home() {
     );
 
   const showOverlay = (nodeId: string, kind: OverlayState["kind"]) => {
-    if (overlayTimerRef.current) {
-      window.clearTimeout(overlayTimerRef.current);
-    }
-
     setOverlay({ nodeId, kind });
-
-    if (kind === "arrival") {
-      overlayTimerRef.current = window.setTimeout(() => {
-        setOverlay((prev) =>
-          prev && prev.nodeId === nodeId && prev.kind === kind ? null : prev,
-        );
-        overlayTimerRef.current = null;
-      }, CARD_HIDE_MS);
-    }
   };
 
   const resetVoyage = () => {
@@ -213,6 +204,40 @@ export default function Home() {
 
   const overlayNode = overlay ? nodeById[overlay.nodeId] : null;
 
+  const handleMapPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    panStartRef.current = { px: e.clientX, py: e.clientY, ox: panOffset.x, oy: panOffset.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleMapPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!panStartRef.current) return;
+    const dx = e.clientX - panStartRef.current.px;
+    const dy = e.clientY - panStartRef.current.py;
+    if (!isDragging && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) setIsDragging(true);
+    const maxX = window.innerWidth * 0.5;
+    const maxY = window.innerHeight * 0.5;
+    setPanOffset({
+      x: Math.max(-maxX, Math.min(maxX, panStartRef.current.ox + dx)),
+      y: Math.max(-maxY, Math.min(maxY, panStartRef.current.oy + dy)),
+    });
+  };
+
+  const handleMapPointerUp = () => {
+    panStartRef.current = null;
+    setIsDragging(false);
+  };
+
+  const centerOnCurrentNode = () => {
+    const node = nodeById[progress.currentNodeId];
+    setIsSnapping(true);
+    setPanOffset({
+      x: window.innerWidth * (0.5 - node.x / 100),
+      y: window.innerHeight * (0.5 - node.y / 100),
+    });
+    window.setTimeout(() => setIsSnapping(false), 400);
+  };
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020617] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_80%_18%,rgba(244,114,182,0.12),transparent_22%),radial-gradient(circle_at_50%_90%,rgba(251,191,36,0.12),transparent_28%)]" />
@@ -225,14 +250,33 @@ export default function Home() {
         </span>
       </div>
 
-      <button
-        onClick={resetVoyage}
-        className="absolute right-6 top-6 z-20 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1]"
-      >
-        Reset
-      </button>
+      <div className="absolute right-6 top-6 z-20 flex gap-2">
+        <button
+          onClick={centerOnCurrentNode}
+          className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1]"
+          aria-label="Center on current node"
+        >
+          ⊙
+        </button>
+        <button
+          onClick={resetVoyage}
+          className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1]"
+        >
+          Reset
+        </button>
+      </div>
 
-      <div className="relative h-screen w-full">
+      <div
+        className={`relative h-screen w-full touch-none select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        onPointerDown={handleMapPointerDown}
+        onPointerMove={handleMapPointerMove}
+        onPointerUp={handleMapPointerUp}
+        onPointerCancel={handleMapPointerUp}
+      >
+        <div
+          className={`absolute inset-0 ${isSnapping ? "transition-transform duration-[400ms] ease-out" : ""}`}
+          style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}
+        >
         <svg className="absolute inset-0 h-full w-full">
           {edges.map((edge) => {
             const from = nodeById[edge.from];
@@ -285,8 +329,8 @@ export default function Home() {
               key={node.id}
               onPointerEnter={() => setHoveredId(node.id)}
               onPointerLeave={() => setHoveredId((prev) => (prev === node.id ? null : prev))}
-              onDoubleClick={() => startTravel(node.id)}
-              className={`group absolute -translate-x-1/2 -translate-y-1/2 transition duration-500 ${
+              onClick={() => startTravel(node.id)}
+              className={`group absolute -translate-x-1/2 -translate-y-1/2 touch-manipulation transition duration-500 ${
                 travelable ? "cursor-pointer" : visible ? "cursor-default" : "cursor-not-allowed"
               }`}
               style={{ left: `${node.x}%`, top: `${node.y}%` }}
@@ -298,6 +342,8 @@ export default function Home() {
                 } ${active ? "scale-[1.9]" : "scale-[1.3]"}`}
                 style={{ backgroundColor: node.color }}
               />
+              {/* Invisible tap target for mobile */}
+              <span className="absolute inset-[-14px]" aria-hidden />
               <span
                 className={`relative block rounded-full transition-all duration-500 ${
                   active
@@ -318,7 +364,7 @@ export default function Home() {
                   </span>
                   {travelable && !active ? (
                     <span className="pointer-events-none absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap text-[9px] uppercase tracking-[0.22em] text-cyan-100/0 opacity-0 transition duration-300 group-hover:text-cyan-100/75 group-hover:opacity-100">
-                      Double click to travel
+                      Tap to travel
                     </span>
                   ) : null}
                 </>
@@ -345,22 +391,32 @@ export default function Home() {
             <div className="absolute -right-2 top-5 h-3.5 w-3.5 -skew-y-[25deg] rounded-br-md bg-fuchsia-300/90" />
           </div>
         </div>
+        </div>{/* end pannable layer */}
 
         <div className="pointer-events-none absolute inset-x-0 bottom-8 z-20 flex justify-center px-4">
           {overlayNode ? (
-            <div className="max-h-[56vh] min-w-[320px] max-w-3xl overflow-auto rounded-[30px] border border-white/10 bg-slate-950/70 px-5 py-5 shadow-[0_24px_80px_rgba(2,6,23,0.65)] backdrop-blur-2xl card-rise">
+            <div className="pointer-events-auto max-h-[56vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[24px] sm:rounded-[30px] border border-white/10 bg-slate-950/70 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_24px_80px_rgba(2,6,23,0.65)] backdrop-blur-2xl card-rise">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-200/70">
                     New Signal
                   </div>
-                  <h2 className="mt-2 text-3xl text-white">{overlayNode.title}</h2>
+                  <h2 className="mt-2 text-xl sm:text-3xl text-white">{overlayNode.title}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-200">
                     {overlayNode.summary}
                   </p>
                 </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-slate-300">
-                  {overlayNode.kind}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-slate-300">
+                    {overlayNode.kind}
+                  </div>
+                  <button
+                    onClick={() => setOverlay(null)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-400 transition hover:bg-white/[0.12] hover:text-white"
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
 
