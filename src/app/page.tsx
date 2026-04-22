@@ -244,26 +244,27 @@ export default function Home() {
       <SpaceBackground />
       <div className="absolute inset-0 starfield opacity-35" />
 
-      <div className="pointer-events-none absolute left-6 top-6 z-20 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] uppercase tracking-[0.38em] text-slate-300">
-        <span className="text-[13px] font-semibold tracking-[0.32em] text-white/90">
-          Complexity Odyssey
-        </span>
-      </div>
-
-      <div className="absolute right-6 top-6 z-20 flex gap-2">
-        <button
-          onClick={centerOnCurrentNode}
-          className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1]"
-          aria-label="Center on current node"
-        >
-          ⊙
-        </button>
-        <button
-          onClick={resetVoyage}
-          className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1]"
-        >
-          Reset
-        </button>
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-4 sm:px-6 sm:pt-6">
+        <div className="pointer-events-none rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 sm:px-4 sm:py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/90 sm:text-[13px]">
+            Complexity Odyssey
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={centerOnCurrentNode}
+            className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1] sm:px-4 sm:py-2"
+            aria-label="Center on current node"
+          >
+            ⊙
+          </button>
+          <button
+            onClick={resetVoyage}
+            className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs uppercase tracking-[0.22em] text-slate-300 transition hover:bg-white/[0.1] sm:px-4 sm:py-2"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       <div
@@ -395,7 +396,10 @@ export default function Home() {
 
         <div className="pointer-events-none absolute inset-x-0 bottom-8 z-20 flex justify-center px-4">
           {overlayNode ? (
-            <div className="pointer-events-auto max-h-[56vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[24px] sm:rounded-[30px] border border-white/10 bg-slate-950/70 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_24px_80px_rgba(2,6,23,0.65)] backdrop-blur-2xl card-rise">
+            <div
+              className="pointer-events-auto max-h-[56vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[24px] sm:rounded-[30px] border border-white/10 bg-slate-950/70 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_24px_80px_rgba(2,6,23,0.65)] backdrop-blur-2xl card-rise"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-200/70">
