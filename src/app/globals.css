@@ -111,3 +111,34 @@ h3 {
     opacity: 1;
   }
 }
+
+@keyframes rocket-bob {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-7px) rotate(2deg);
+  }
+  70% {
+    transform: translateY(-3px) rotate(-1.5deg);
+  }
+}
+
+.rocket-bob {
+  animation: rocket-bob 3.4s ease-in-out infinite;
+}
+
+@keyframes rocket-fire-pulse {
+  0%, 100% {
+    transform: translateX(-50%) scaleY(1) scaleX(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateX(-50%) scaleY(1.35) scaleX(1.2);
+    opacity: 1;
+  }
+}
+
+.rocket-fire-travel {
+  animation: rocket-fire-pulse 0.35s ease-in-out infinite;
+}

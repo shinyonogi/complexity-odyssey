@@ -101,6 +101,7 @@ export default function Home() {
     kind: "arrival",
   });
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [rocketAngle, setRocketAngle] = useState(0);
 
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -164,6 +165,7 @@ export default function Home() {
 
     setProgress(defaultProgress);
     setRocketPosition(toRocketPosition(startingNodeId));
+    setRocketAngle(0);
     setTravellingToId(null);
     setHoveredId(null);
     setOverlay({ nodeId: startingNodeId, kind: "arrival" });
@@ -187,6 +189,12 @@ export default function Home() {
     if (travellingToId || nodeId === progress.currentNodeId) return;
     if (!canTravelToNode(nodeId)) return;
 
+    const fromNode = nodeById[progress.currentNodeId];
+    const toNode = nodeById[nodeId];
+    const dx = (toNode.x - fromNode.x) * window.innerWidth;
+    const dy = (toNode.y - fromNode.y) * window.innerHeight;
+    setRocketAngle(Math.atan2(dx, -dy) * (180 / Math.PI));
+
     setTravellingToId(nodeId);
     setHoveredId(null);
     setRocketPosition(toRocketPosition(nodeId));
@@ -197,6 +205,7 @@ export default function Home() {
         discoveredIds: unique([...prev.discoveredIds, nodeId]),
       }));
       setTravellingToId(null);
+      setRocketAngle(0);
       showOverlay(nodeId, "arrival");
       travelTimerRef.current = null;
     }, TRAVEL_MS);
@@ -375,21 +384,111 @@ export default function Home() {
         })}
 
         <div
-          className={`absolute -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-[1800ms] ${
-            travellingToId ? "rocket-travel" : ""
-          }`}
-          style={{
-            left: `${rocketPosition.x}%`,
-            top: `${rocketPosition.y}%`,
-          }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-[1800ms]"
+          style={{ left: `${rocketPosition.x}%`, top: `${rocketPosition.y}%` }}
         >
-          <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200/15 blur-3xl" />
-          <div className="absolute left-1/2 top-[56%] h-16 w-3 -translate-x-1/2 rounded-full bg-gradient-to-b from-orange-300/80 to-transparent blur-md" />
-          <div className="relative">
-            <div className="h-12 w-7 rounded-t-full rounded-b-[18px] border border-cyan-100/80 bg-gradient-to-b from-white to-cyan-300 shadow-[0_0_28px_rgba(125,211,252,0.9)]" />
-            <div className="absolute left-1/2 top-2 h-3 w-3 -translate-x-1/2 rounded-full bg-sky-950" />
-            <div className="absolute -left-2 top-5 h-3.5 w-3.5 skew-y-[25deg] rounded-bl-md bg-fuchsia-300/90" />
-            <div className="absolute -right-2 top-5 h-3.5 w-3.5 -skew-y-[25deg] rounded-br-md bg-fuchsia-300/90" />
+          {/* Rotation wrapper: faces travel direction, smoothly returns upright on landing */}
+          <div
+            style={{
+              transform: `rotate(${rocketAngle}deg)`,
+              transition: `transform ${travellingToId ? "350ms" : "700ms"} ease-in-out`,
+            }}
+          >
+            {/* Bob (idle) / engine-pulse (travel) wrapper */}
+            <div className={travellingToId ? "rocket-travel" : "rocket-bob"}>
+              {/* Ambient glow halo */}
+              <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200/12 blur-3xl" />
+
+              {/* Thruster fire — dim at rest, big & pulsing during travel */}
+              <div
+                className={`absolute left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b blur-md transition-[height,width,opacity] duration-300 ${
+                  travellingToId
+                    ? "rocket-fire-travel h-24 w-5 from-orange-300 to-transparent opacity-100"
+                    : "h-8 w-2 from-orange-300/60 to-transparent opacity-60"
+                }`}
+                style={{ top: "72px" }}
+              />
+              {travellingToId && (
+                <div
+                  className="rocket-fire-travel absolute left-1/2 -translate-x-1/2 h-14 w-2 rounded-full bg-gradient-to-b from-yellow-100/90 to-transparent blur-sm opacity-80"
+                  style={{ top: "72px" }}
+                />
+              )}
+
+              {/* Rocket body — iconic nose cone + body + swept fins */}
+              <div
+                className="relative flex flex-col items-center"
+                style={{ filter: "drop-shadow(0 0 14px rgba(125,211,252,0.75))" }}
+              >
+                {/* Nose cone (CSS border triangle) */}
+                <div
+                  style={{
+                    width: 0, height: 0,
+                    borderLeft: "14px solid transparent",
+                    borderRight: "14px solid transparent",
+                    borderBottom: "22px solid #f1f5f9",
+                  }}
+                />
+
+                {/* Main body */}
+                <div
+                  className="relative"
+                  style={{
+                    width: "28px", height: "54px",
+                    background:
+                      "linear-gradient(to right, #94a3b8 0%, #f1f5f9 28%, #ffffff 50%, #f1f5f9 72%, #94a3b8 100%)",
+                  }}
+                >
+                  {/* Porthole */}
+                  <div
+                    style={{
+                      position: "absolute", top: "9px", left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "13px", height: "13px", borderRadius: "50%",
+                      background: "radial-gradient(circle at 35% 35%, #164e63, #0c1a2e)",
+                      border: "2px solid rgba(125,211,252,0.9)",
+                      boxShadow: "inset 0 0 5px rgba(125,211,252,0.3)",
+                    }}
+                  />
+
+                  {/* Accent stripe */}
+                  <div
+                    style={{
+                      position: "absolute", left: 0, right: 0, top: "30px", height: "8px",
+                      background: "linear-gradient(to right, #b91c1c, #f97316, #b91c1c)",
+                    }}
+                  />
+
+                  {/* Nozzle */}
+                  <div
+                    style={{
+                      position: "absolute", bottom: 0, left: "5px", right: "5px",
+                      height: "7px", background: "#334155", borderRadius: "0 0 3px 3px",
+                    }}
+                  />
+
+                  {/* Left swept fin */}
+                  <div
+                    style={{
+                      position: "absolute", right: "100%", bottom: "7px",
+                      width: "20px", height: "30px",
+                      background: "linear-gradient(135deg, #ef4444, #b91c1c)",
+                      clipPath: "polygon(100% 0%, 0% 100%, 100% 100%)",
+                    }}
+                  />
+
+                  {/* Right swept fin */}
+                  <div
+                    style={{
+                      position: "absolute", left: "100%", bottom: "7px",
+                      width: "20px", height: "30px",
+                      background: "linear-gradient(225deg, #ef4444, #b91c1c)",
+                      clipPath: "polygon(0% 0%, 100% 100%, 0% 100%)",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         </div>{/* end pannable layer */}
