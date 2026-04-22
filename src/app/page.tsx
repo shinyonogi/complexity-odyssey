@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import MathFormula from "@/components/math-formula";
+import ConceptCard from "@/components/concept-card";
 import { conceptNodes, startingNodeId } from "@/data/concepts";
 
 type ProgressState = {
@@ -493,132 +493,9 @@ export default function Home() {
         </div>
         </div>{/* end pannable layer */}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 z-20 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex justify-center px-3 sm:px-4">
           {overlayNode ? (
-            <div
-              className="pointer-events-auto max-h-[56vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[24px] sm:rounded-[30px] border border-white/10 bg-slate-950/70 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_24px_80px_rgba(2,6,23,0.65)] backdrop-blur-2xl card-rise"
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-200/70">
-                    New Signal
-                  </div>
-                  <h2 className="mt-2 text-xl sm:text-3xl text-white">{overlayNode.title}</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-200">
-                    {overlayNode.summary}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-slate-300">
-                    {overlayNode.kind}
-                  </div>
-                  <button
-                    onClick={() => setOverlay(null)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-400 transition hover:bg-white/[0.12] hover:text-white"
-                    aria-label="Close"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="space-y-4">
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-fuchsia-200/70">
-                      Intuition
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-100">
-                      {overlayNode.intuition}
-                    </p>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-cyan-200/70">
-                      Details
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-100">
-                      {overlayNode.details}
-                    </p>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-amber-200/70">
-                      Example
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-100">
-                      {overlayNode.example}
-                    </p>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-rose-200/70">
-                      Common Pitfall
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-100">
-                      {overlayNode.pitfall}
-                    </p>
-                  </section>
-                </div>
-
-                <div className="space-y-4">
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-[10px] uppercase tracking-[0.28em] text-emerald-200/70">
-                        Sector
-                      </div>
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
-                        {overlayNode.sector}
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {overlayNode.keywords.map((keyword) => (
-                        <span
-                          key={keyword}
-                          className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-200"
-                        >
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-sky-200/70">
-                      Formula Deck
-                    </div>
-                    <div className="mt-3 space-y-3">
-                      {overlayNode.formulas.map((formula) => (
-                        <div
-                          key={`${overlayNode.id}-${formula.label}`}
-                          className="rounded-2xl border border-white/8 bg-slate-950/50 p-3"
-                        >
-                          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                            {formula.label}
-                          </div>
-                          <div className="mt-2 overflow-x-auto text-[15px] text-cyan-50">
-                            <MathFormula
-                              latex={formula.latex}
-                              displayMode={formula.display}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-violet-200/70">
-                      Unlocks
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-100">
-                      {overlayNode.unlocks}
-                    </p>
-                  </section>
-                </div>
-              </div>
-            </div>
+            <ConceptCard node={overlayNode} onClose={() => setOverlay(null)} />
           ) : null}
         </div>
 
